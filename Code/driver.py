@@ -1,10 +1,11 @@
 import retro
 from runRightAgent import runRightAgent
+from runRightJumpSometimesAgent import runRightJumpSometimesAgent
 
 def main():
     env = retro.make(game='SonicTheHedgehog2-Genesis')
     obs = env.reset()
-    agent = runRightAgent()
+    agent = runRightJumpSometimesAgent()
     # [NA, Jump, NA, NA, Up, Down, Left, Right, Jump, NA, NA, NA]
     while True:
         obs, rew, done, info = env.step(agent.getAction())
