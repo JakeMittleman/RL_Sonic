@@ -1,6 +1,5 @@
 import retro
-from runRightAgent import runRightAgent
-from runRightJumpSometimesAgent import runRightJumpSometimesAgent
+from old_agents.runRightJumpSometimesAgent import runRightJumpSometimesAgent
 
 def main():
     env = retro.make(game='SonicTheHedgehog2-Genesis')
