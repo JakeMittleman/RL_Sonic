@@ -17,4 +17,11 @@ class ConnectionGene:
         self.out_node = out_node
         self.weight = weight
         self.enabled = enabled
+
+        """
+        This is the historical origin of this gene.
+        Every time a new connection gene is created it receives an innovation number of +1.
+        My expectation is somewhere we'll maintain a global track of the current innovation. This is probably
+        to tell which genes are older and which are newer. Maybe.
+        """
         self.innovation = innovation
