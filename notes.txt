@@ -1,0 +1,34 @@
+This may present a problem that we need to keep track of:
+
+"A possible problem is that the same structural innovation will receive different innovation numbers in the same
+generation if it occurs by chance more than once. However, by keeping a list of the innovations that occurred in
+the current generation, it is possible to ensure that when the same structure arises more than once through
+independent mutations in the same generation, each identical mutation is assigned the
+same innovation number. Thus, there is no resultant explosion of innovation numbers."
+
+----------------===================----------------
+
+Node Genes:
+
+I'm unsure of how this should be implemented. The paper says node genes provide a list of inputs, hidden, and output
+nodes. The video the guy just keeps this an enum of its type. Honestly the way he does it in the video makes more
+sense to me. He has the genome store a list of edges and a list of nodes (like a graph). The paper has it a little weird.
+I'm in favor of doing it like in the video but if you think we should stick solely to how it is in the paper I feel
+fine with that.
+
+----------------===================-----------------
+
+Speciation (creating new species):
+
+"The distance measure δ allows us to speciate using a compatibility threshold δt.
+An ordered list of species is maintained. In each generation, genomes are sequentially
+placed into species. Each existing species is represented by a random genome inside
+the species from the previous generation. A given genome g in the current generation is
+placed in the first species in which g is compatible with the representative genome of
+that species. This way, species do not overlap.
+If g is not compatible with any existing
+species, a new species is created with g as its representative."
+
+----------------===================-----------------
+
+Page 13 of paper has a fitness formula that seems important but i'm not sure where to put it.
