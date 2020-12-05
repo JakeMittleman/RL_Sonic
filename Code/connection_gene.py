@@ -17,11 +17,24 @@ class ConnectionGene:
         self.out_node = out_node
         self.weight = weight
         self.enabled = enabled
+        self.innovation = innovation
 
         """
         This is the historical origin of this gene.
         Every time a new connection gene is created it receives an innovation number of +1.
         My expectation is somewhere we'll maintain a global track of the current innovation. This is probably
         to tell which genes are older and which are newer. Maybe.
+
+        Magnus adds: This is to keep track of which genes should pair with eachother. So when you do crossover,
+        you use the innovation number like an ID for pairing (ID: 8 pairs with ID:8 in the other gene.)
         """
         self.innovation = innovation
+
+    """
+    We need a way to check for equality between connections (in case, a random connection is the same twice
+    in one generations mutation, in which case it should have the same innovation number). Since the innovation
+    number might be different, we must check between everything else.
+    """
+    def isEqualTo(self, otherConnection):
+        # I think this is enough?
+        return self.in_node == otherConnection.in_node and self.out_node == otherConnection.out_node
