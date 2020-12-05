@@ -13,9 +13,9 @@ class NodeGene:
     def __init__(self, gene_type, id, inNodes=None, outNodes=None, hiddenNodes=None):
         self.type = gene_type.lower()
         self.id = id
-        self.inNodes = inNodes if inNodes is not None else []
-        self.outNodes = outNodes if outNodes is not None else []
-        self.hiddenNodes = hiddenNodes if hiddenNodes is not None else [] 
+        self.inNodes = inNodes if inNodes is not None else {}
+        self.outNodes = outNodes if outNodes is not None else {}
+        self.hiddenNodes = hiddenNodes if hiddenNodes is not None else {} 
 
     """
     We're going to need to be able to copy nodes.

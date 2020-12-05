@@ -8,9 +8,9 @@ class Genome:
         :param connection_genes: a list of ConnectionGene objects
         """
         if connection_genes is None:
-            connection_genes = []
+            connection_genes = {}
         if node_genes is None:
-            node_genes = []
+            node_genes = {}
         self.connection_genes = connection_genes
         self.node_genes = node_genes
 
