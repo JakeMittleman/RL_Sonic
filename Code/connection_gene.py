@@ -38,3 +38,9 @@ class ConnectionGene:
     def isEqualTo(self, otherConnection):
         # I think this is enough?
         return self.in_node == otherConnection.in_node and self.out_node == otherConnection.out_node
+
+    """
+    This will also be needed for crossover.
+    """
+    def copy(self):
+        return ConnectionGene(self.in_node, self.out_node, self.weight, self.enabled, self.innovation)
