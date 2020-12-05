@@ -3,6 +3,8 @@ This class represents a connection between either an input node and a hidden nod
 a hidden node and an output node.
 Input -> Hidden or Hidden -> Output
 """
+
+
 class ConnectionGene:
 
     def __init__(self, in_node=None, out_node=None, weight=0.0, enabled=True, innovation=0):
@@ -35,6 +37,7 @@ class ConnectionGene:
     in one generations mutation, in which case it should have the same innovation number). Since the innovation
     number might be different, we must check between everything else.
     """
+
     def isEqualTo(self, otherConnection):
         # I think this is enough?
         return self.in_node == otherConnection.in_node and self.out_node == otherConnection.out_node
@@ -42,5 +45,20 @@ class ConnectionGene:
     """
     This will also be needed for crossover.
     """
+
     def copy(self):
         return ConnectionGene(self.in_node, self.out_node, self.weight, self.enabled, self.innovation)
+
+    """
+    Functions below are to enable drawing - hopefully it won't bite us in the butt later.
+    """
+
+    def __repr__(self):
+        return self.in_node, self.out_node
+
+    def __len__(self):
+        return 2
+
+    def __iter__(self):
+        for value in [self.in_node, self.out_node]:
+            yield value
