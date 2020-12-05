@@ -22,3 +22,9 @@ class NodeGene:
     """
     def copy(self):
         return NodeGene(self.type, self.id, self.inNodes, self.outNodes, self.hiddenNodes)
+
+    """
+    String representation, mostly for testing / visualizing.
+    """
+    def __str__(self):
+        return str.format('NodeGene\nId: {}\nType: {}\nInNodes: {}\nOutNodes: {}\nHiddenNodes: {}', self.id, self.type, self.inNodes.values(), self.outNodes.values(), self.hiddenNodes.values())
