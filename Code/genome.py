@@ -12,8 +12,9 @@ class Genome:
             connection_genes = []
         if node_genes is None:
             node_genes = []
-        self.connection_genes = connection_genes
+        self.connection_genes = sorted(connection_genes, key=lambda x: x.innovation)
         self.node_genes = node_genes
+        self.fitness = 0
 
     def add_connection(self, in_node, out_node, innovation):
         """
@@ -72,18 +73,52 @@ class Genome:
 
         return in_connection, out_connection
 
-    def merge(self, parent2):
+    def cross(self, parent2):
         """
         This method takes two parent genomes (or just two genomes that will eventually become parents)
         and merges them into one genome.
         :param parent2: other genome to merge with this genome
         :return: a new genome merged from parent1 and parent2
         """
+        matches = list(self.get_matching_genes(parent2).values())
+        new_genes = [random.choice(match) for match in matches]
 
-        # Any connections labeled as DISABLED (even if the other genome has an enabled connection) remains
-        # disabled in the returned child genome
+        if self.fitness > parent2.fitness:
+            for gene in self.connection_genes:
+                if gene not in new_genes:
+                    new_genes.append(gene)
 
-        raise NotImplementedError("This method is not implemented")
+        elif parent2.fitness > self.fitness:
+            for gene in parent2.connection_genes:
+                if gene not in new_genes:
+                    new_genes.append(gene)
+
+        else:
+            for gene in self.connection_genes:
+                if gene not in new_genes:
+                    new_genes.append(gene)
+
+            for gene2 in parent2.connection_genes:
+                if gene2 not in new_genes:
+                    new_genes.append(gene2)
+
+        nodes = set()
+
+        for gene in new_genes:
+            if not gene.enabled:
+                chance = random.random()
+                if chance <= 0.25:
+                    gene.enabled = True
+            nodes.add(gene.in_node)
+            nodes.add(gene.out_node)
+
+        return Genome(new_genes, list(nodes))
+
+    def sh(self, genome2, threshold, c1, c2, c3, N):
+        dist = self.get_compatibility_distance(genome2, c1, c2, c3, N)
+        if dist <= threshold:
+            return 1
+        return 0
 
     def get_compatibility_distance(self, genome2, c1, c2, c3, N):
         """

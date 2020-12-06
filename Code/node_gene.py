@@ -21,6 +21,9 @@ class NodeGene:
     def copy(self):
         return NodeGene(self.type, self.id, self.nodes)
 
+    def __eq__(self, other):
+        return self.id == other.id
+
     """
     String representation, mostly for testing / visualizing.
     """

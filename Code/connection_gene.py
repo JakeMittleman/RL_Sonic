@@ -38,7 +38,7 @@ class ConnectionGene:
     number might be different, we must check between everything else.
     """
 
-    def isEqualTo(self, otherConnection):
+    def __eq__(self, otherConnection):
         # I think this is enough?
         return self.in_node == otherConnection.in_node and self.out_node == otherConnection.out_node
 
