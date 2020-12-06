@@ -70,7 +70,7 @@ class Genome:
 
         raise NotImplementedError("This method is not implemented")
 
-    def get_compatibility_distance(self, genome2):
+    def get_compatibility_distance(self, genome2, c1, c2, c3, N):
         """
         Formula: δ = (c1E / N) + (c2D / N) + c3 * ~W
         E: Total number of excess genes (Connection Genes where the innovation number
@@ -84,4 +84,101 @@ class Genome:
         :return: the commpatibility distance
         """
 
-        raise NotImplementedError("This method is not implemented")
+        E = self.count_excess_genes(genome2)
+        D = self.count_disjoint_genes(genome2)
+        W = self.get_average_weight_diff(genome2)
+
+        return ((c1 * E) / N) + ((c2 * D) / N) + c3 * W
+
+    def get_matching_genes(self, genome2):
+
+        inno_nums_p1 = list(map(lambda x: x.innovation, self.connection_genes))
+        inno_nums_p2 = list(map(lambda x: x.innovation, genome2.connection_genes))
+
+        all_nums = set(inno_nums_p1).intersection(set(inno_nums_p2))
+
+        matches = {num: [] for num in all_nums}
+
+        for connection_gene in self.connection_genes:
+            if connection_gene.innovation in all_nums:
+                matches[connection_gene.innovation].append(connection_gene)
+
+        for connection_gene in genome2.connection_genes:
+            if connection_gene.innovation in all_nums:
+                matches[connection_gene.innovation].append(connection_gene)
+
+        return matches
+
+    def get_average_weight_diff(self, genome2):
+
+        matching_genes = list(self.get_matching_genes(genome2).values())
+
+        # total_weight / num_matches
+
+        total_weight = 0
+
+        for match in matching_genes:
+            total_weight += abs(match[0].weight - match[1].weight)
+
+        return total_weight / len(matching_genes)
+
+    def get_max_innovation_num(self):
+        return self.connection_genes[-1].innovation if self.connection_genes else 0
+
+    def count_excess_genes(self, genome2):
+        """
+        counts number of excess genes
+        :param genome2: the other genome
+        :return: number of excess genes
+        """
+
+        max_innovation_p1 = self.get_max_innovation_num()
+        max_innovation_p2 = genome2.get_max_innovation_num()
+
+        if max_innovation_p1 == 0:
+            return len(genome2.connection_genes)
+        elif max_innovation_p2 == 0:
+            return len(self.connection_genes)
+
+        num_excess = 0
+
+        if max_innovation_p1 > max_innovation_p2:
+            for i in range(len(self.connection_genes)-1, -1, -1):
+                if self.connection_genes[i].innovation > max_innovation_p2:
+                    num_excess += 1
+                else:
+                    break
+
+        elif max_innovation_p2 > max_innovation_p1:
+            for i in range(len(genome2.connection_genes) - 1, -1, -1):
+                if genome2.connection_genes[i].innovation > max_innovation_p1:
+                    num_excess += 1
+                else:
+                    break
+
+        return num_excess
+
+    def count_disjoint_genes(self, genome2):
+        """
+        count number of disjoint genes
+        :param genome2: the other genome
+        :return: number of disjoint genes
+        """
+
+        inno_nums_p1 = list(map(lambda x: x.innovation, self.connection_genes))
+        inno_nums_p2 = list(map(lambda x: x.innovation, genome2.connection_genes))
+
+        p1_max = max(inno_nums_p1)
+        p2_max = max(inno_nums_p2)
+
+        num_disjoint = 0
+
+        all_nums = set(inno_nums_p1 + inno_nums_p2)
+
+        for num in all_nums:
+            if (((num not in inno_nums_p1 and num in inno_nums_p2) or (num in inno_nums_p1 and num not in inno_nums_p2))
+                  and num <= min(p1_max, p2_max)):
+
+                num_disjoint += 1
+
+        return num_disjoint
