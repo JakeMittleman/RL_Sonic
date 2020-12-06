@@ -16,6 +16,11 @@ class Genome:
         self.node_genes = node_genes
         self.fitness = 0
 
+    def get_connection(self, in_node, out_node):
+        for gene in self.connection_genes:
+            if gene.in_node == in_node and gene.out_node == out_node:
+                return gene
+
     def add_connection(self, in_node, out_node, innovation):
         """
         Add a new connection gene with a random weight connecting two previously unconnected nodes.
@@ -26,7 +31,7 @@ class Genome:
         """
 
         if in_node.type == "output" or out_node.type == "input" or (in_node.type == out_node.type) or \
-                not (in_node in self.node_genes and out_node not in self.node_genes):
+                not (in_node in self.node_genes and out_node in self.node_genes):
             return
 
         for connection_gene in self.connection_genes:
@@ -60,8 +65,8 @@ class Genome:
         # 1) Disable the old connection
         connection.enabled = False
         # 2) Get the in_node and out_node
-        in_node = connection.in_node
-        out_node = connection.out_node
+        in_node = connection.in_node.copy()
+        out_node = connection.out_node.copy()
         # 3) Make a connection genome from in_node -> node with a weight of 1
         # TODO: change these innovation numbers
         in_connection = ConnectionGene(in_node, node, 1.0, True, innovation=innovation)
@@ -102,17 +107,17 @@ class Genome:
                 if gene2 not in new_genes:
                     new_genes.append(gene2)
 
-        nodes = set()
+        nodes = []
 
         for gene in new_genes:
             if not gene.enabled:
                 chance = random.random()
                 if chance <= 0.25:
                     gene.enabled = True
-            nodes.add(gene.in_node)
-            nodes.add(gene.out_node)
+            nodes.append(gene.in_node)
+            nodes.append(gene.out_node)
 
-        return Genome(new_genes, list(nodes))
+        return Genome(new_genes, nodes)
 
     def sh(self, genome2, threshold, c1, c2, c3, N):
         dist = self.get_compatibility_distance(genome2, c1, c2, c3, N)

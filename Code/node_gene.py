@@ -24,11 +24,3 @@ class NodeGene:
     def __eq__(self, other):
         return self.id == other.id
 
-    """
-    String representation, mostly for testing / visualizing.
-    """
-    def __str__(self):
-        return str.format('{}', self.id)
-
-    def __repr__(self):
-        return str.format('{}', self.id)

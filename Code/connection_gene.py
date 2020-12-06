@@ -48,17 +48,3 @@ class ConnectionGene:
 
     def copy(self):
         return ConnectionGene(self.in_node, self.out_node, self.weight, self.enabled, self.innovation)
-
-    """
-    Functions below are to enable drawing - hopefully it won't bite us in the butt later.
-    """
-
-    def __repr__(self):
-        return self.in_node, self.out_node
-
-    def __len__(self):
-        return 2
-
-    def __iter__(self):
-        for value in [self.in_node, self.out_node]:
-            yield value
