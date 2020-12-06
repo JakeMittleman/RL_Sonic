@@ -1,6 +1,7 @@
 import random
 from connection_gene import ConnectionGene
 
+
 class Genome:
 
     def __init__(self, connection_genes=None, node_genes=None):
@@ -14,26 +15,31 @@ class Genome:
         self.connection_genes = connection_genes
         self.node_genes = node_genes
 
-    def add_connection(self, in_node, out_node):
+    def add_connection(self, in_node, out_node, innovation):
         """
         Add a new connection gene with a random weight connecting two previously unconnected nodes.
         :param in_node: the parent node
         :param out_node: the child node
-        :return: nothing
+        :param innovation: the innovation
+        :return: the new connection
         """
 
-        # TODO: Check if in_node can be connected to out_node.
-        #  If in_node=output and out_node=input then it can't be done for example.
-        #  For now we're just assuming it's done properly.
+        if in_node.type == "output" or out_node.type == "input" or (in_node.type == out_node.type) or \
+                not (in_node in self.node_genes and out_node not in self.node_genes):
+            return
 
-        # TODO: Check if in_node and out_node are previously connected (cannot connect 2 connected nodes)
+        for connection_gene in self.connection_genes:
+            if connection_gene.in_node == in_node and connection_gene.out_node == out_node:
+                return
 
         # NEAT paper says the new connection gene gets a random weight
-        self.connection_genes.append(ConnectionGene(in_node, out_node, random.random()))
+        new_connection = ConnectionGene(in_node, out_node, random.random(), innovation=innovation)
+        self.connection_genes.append(new_connection)
+        return new_connection
 
     # TODO: Do we want to ask the user to provide the connection gene or the in_node and out_node?
     #  My instinct is the connection but I could see an argument made for the in/out nodes
-    def add_node(self, node, connection):
+    def add_node(self, node, connection, innovation):
         """
         This severs a connection between two nodes (disables it) and creates two connection genes. One from the old
         connection's parent to this new node and one from this new node to the old connection's child.
@@ -43,19 +49,28 @@ class Genome:
         new connections: A --> C --> B
         :param node: the node to splice into a connection
         :param connection: the connection to be disabled.
+        :param innovation: the new innovation number
         :return: nothing
         """
 
-        # TODO: Implement this method
-
         # 0) Check if the connection exists in our genome?
+        if connection not in self.connection_genes:
+            return
         # 1) Disable the old connection
+        connection.enabled = False
         # 2) Get the in_node and out_node
+        in_node = connection.in_node
+        out_node = connection.out_node
         # 3) Make a connection genome from in_node -> node with a weight of 1
+        # TODO: change these innovation numbers
+        in_connection = ConnectionGene(in_node, node, 1.0, True, innovation=innovation)
         # 4) Make a connection genome from node -> out_node with weight of the old connection
+        out_connection = ConnectionGene(node, out_node, connection.weight, innovation=innovation+1)
+        self.connection_genes.append(in_connection)
+        self.connection_genes.append(out_connection)
+        self.node_genes.append(node)
 
-        raise NotImplementedError("This method is not implemented")
-
+        return in_connection, out_connection
 
     def merge(self, parent2):
         """
@@ -78,7 +93,7 @@ class Genome:
         D: Total number of disjoint genes (Connection Genes where the innovation number is < max innovation number in
                                             other genome but doesn't have a match)
         N: Number of genes in larger genome (Note: Can be 1 if genomes are small I.E. < 20 genes)
-        C1, C2, C3: Constants that we choose to
+        C1, C2, C3: Constants that we choose
 
         :param genome2: the other genome to check compatibility distance
         :return: the commpatibility distance
