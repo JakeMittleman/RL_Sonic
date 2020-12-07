@@ -128,13 +128,13 @@ class Genome:
             for gene in self.connection_genes:
                 if gene.innovation not in new_genes_innovations:
                     new_genes_innovations.append(gene.innovation)
-                    new_genes.append(gene)
+                    new_genes.append(gene.copy())
 
         elif parent2.fitness > self.fitness:
             for gene in parent2.connection_genes:
                 if gene.innovation not in new_genes_innovations:
                     new_genes_innovations.append(gene.innovation)
-                    new_genes.append(gene)
+                    new_genes.append(gene.copy())
 
         else:
             for gene in self.connection_genes:
@@ -142,14 +142,14 @@ class Genome:
                     # Randomly inherit disjoint / excess genes.
                     if random.random() > 0.5:
                         new_genes_innovations.append(gene.innovation)
-                        new_genes.append(gene)
+                        new_genes.append(gene.copy())
 
             for gene2 in parent2.connection_genes:
                 if gene2.innovation not in new_genes_innovations:
                     # Randomly inherit disjoint / excess genes.
                     if random.random() > 0.5:
                         new_genes_innovations.append(gene2.innovation)
-                        new_genes.append(gene2)
+                        new_genes.append(gene2.copy())
 
         nodes = set()
 
@@ -158,8 +158,8 @@ class Genome:
                 chance = random.random()
                 if chance <= 0.25:
                     gene.enabled = True
-            nodes.add(gene.in_node)
-            nodes.add(gene.out_node)
+            nodes.add(gene.in_node.copy())
+            nodes.add(gene.out_node.copy())
 
         nodes = list(nodes)
 
@@ -203,11 +203,11 @@ class Genome:
 
         for connection_gene in self.connection_genes:
             if connection_gene.innovation in all_nums:
-                matches[connection_gene.innovation].append(connection_gene)
+                matches[connection_gene.innovation].append(connection_gene.copy())
 
         for connection_gene in genome2.connection_genes:
             if connection_gene.innovation in all_nums:
-                matches[connection_gene.innovation].append(connection_gene)
+                matches[connection_gene.innovation].append(connection_gene.copy())
 
         return matches
 

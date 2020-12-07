@@ -14,6 +14,7 @@ class Evaluator:
 
     def evaluate(self):
         mutated_connection_genes = {}
+        # Assign genomes to species.
         for genome in self.genomes:
             found_species = False
 
@@ -28,6 +29,7 @@ class Evaluator:
                 self.species.append(species)
                 self.species_map[genome.id] = species
 
+        # Get the adjusted fitness of the species.
         for genome in self.genomes:
             fitness = genome.fitness
             species = self.species_map[genome.id]
@@ -36,6 +38,7 @@ class Evaluator:
             species.add_fitness(adj_fitness)
             self.score_map[genome.id] = adj_fitness
 
+        # Put the best genomes of each species into the next generation.
         next_generation = []
         for species in self.species:
             sorted_genomes = sorted(
@@ -43,16 +46,21 @@ class Evaluator:
             fittest_genome = sorted_genomes[0]
             next_generation.append(fittest_genome)
 
+        # Check if we're done.
         best_generations = sorted(
             next_generation, key=lambda x: x.fitness, reverse=True)
 
         if best_generations[0].fitness > self.threshold:
             return True, best_generations[0]
 
+        # Fill up the rest of the population with crossovers.
         while len(next_generation) < self.pop_size:
             species = self.get_random_species()
-
-            parentA = random.choice(species.genomes)
+            sorted_genomes = sorted(
+                species.genomes, key=lambda x: x.fitness, reverse=True)
+            # parentA = random.choice(species.genomes)
+            # Let the cross over happen between the best genomes.
+            parentA = sorted_genomes[0]
             parentB = random.choice(species.genomes)
             while parentB == parentA:
                 if len(species.genomes) < 2:
@@ -95,7 +103,7 @@ class Evaluator:
             next_generation.append(new_genome)
 
         self.genomes = next_generation[:]
-        return False, None
+        return False, best_generations[0]
 
     def get_random_species(self):
         total_weight = 0.0

@@ -63,6 +63,8 @@ def main():
                   'generations! It achieved a fitness of', best_genome.fitness)
             # Save the playback.
             exit()
+        else:
+            print('Best Genome:', best_genome.id, 'with fitness:', best_genome.fitness)
         population = []
         for genome in evaluator.genomes:
             population.append(neural_network.NeuralNetwork(genome))
