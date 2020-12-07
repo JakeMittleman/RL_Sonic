@@ -100,14 +100,17 @@ class Genome:
             while node2.type not in ("hidden", "output"):
                 node2 = random.choice(self.node_genes)
 
-        self.add_connection(node1, node2)
+        return self.add_connection(node1, node2)
 
     def mutate_add_node(self):
         connection_gene = random.choice(self.connection_genes)
         while not connection_gene.enabled:
             connection_gene = random.choice(self.connection_genes)
 
-        self.add_node(NodeGene("hidden", uuid.uuid4()), connection_gene)
+        return self.add_node(NodeGene("hidden", self.nextNodeNumber()), connection_gene)
+
+    def nextNodeNumber(self):
+        return len(self.node_genes) + 1
 
     def cross(self, parent2):
         """
@@ -118,37 +121,50 @@ class Genome:
         """
         matches = list(self.get_matching_genes(parent2).values())
         new_genes = [random.choice(match) for match in matches]
+        
 
+        new_genes_innovations = [x.innovation for x in new_genes]
         if self.fitness > parent2.fitness:
             for gene in self.connection_genes:
-                if gene not in new_genes:
+                if gene.innovation not in new_genes_innovations:
+                    new_genes_innovations.append(gene.innovation)
                     new_genes.append(gene)
 
         elif parent2.fitness > self.fitness:
             for gene in parent2.connection_genes:
-                if gene not in new_genes:
+                if gene.innovation not in new_genes_innovations:
+                    new_genes_innovations.append(gene.innovation)
                     new_genes.append(gene)
 
         else:
             for gene in self.connection_genes:
-                if gene not in new_genes:
-                    new_genes.append(gene)
+                if gene.innovation not in new_genes_innovations:
+                    # Randomly inherit disjoint / excess genes.
+                    if random.random() > 0.5:
+                        new_genes_innovations.append(gene.innovation)
+                        new_genes.append(gene)
 
             for gene2 in parent2.connection_genes:
-                if gene2 not in new_genes:
-                    new_genes.append(gene2)
+                if gene2.innovation not in new_genes_innovations:
+                    # Randomly inherit disjoint / excess genes.
+                    if random.random() > 0.5:
+                        new_genes_innovations.append(gene2.innovation)
+                        new_genes.append(gene2)
 
-        nodes = []
+        nodes = set()
 
         for gene in new_genes:
             if not gene.enabled:
                 chance = random.random()
                 if chance <= 0.25:
                     gene.enabled = True
-            nodes.append(gene.in_node)
-            nodes.append(gene.out_node)
+            nodes.add(gene.in_node)
+            nodes.add(gene.out_node)
 
-        return Genome(new_genes, nodes)
+        nodes = list(nodes)
+
+        innovation_tracker = self.innovation_tracker if self.innovation_tracker.innovation > parent2.innovation_tracker.innovation else parent2.innovation_tracker
+        return Genome(innovation_tracker, new_genes, nodes)
 
     def sh(self, genome2, threshold, c1, c2, c3, N):
         dist = self.get_compatibility_distance(genome2, c1, c2, c3, N)

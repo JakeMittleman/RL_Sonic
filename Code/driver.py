@@ -4,30 +4,69 @@ from innovation_tracker import InnovationTracker
 from evaluation import Evaluator
 import random
 
-POPULATION_SIZE = 10
+POPULATION_SIZE = 20
 
 def main():
     env = retro.make(game='SonicTheHedgehog2-Genesis')
     population = []
-    innovation_tracker = InnovationTracker()
     evaluator = Evaluator(POPULATION_SIZE)
 
     for i in range(POPULATION_SIZE):
-        population.append(neural_network.NeuralNetwork.create(1120, 12, innovation_tracker))
+        population.append(neural_network.NeuralNetwork.create(
+            1, 12))
 
     for nn in population:
-        # do sonic shit
-        obs = env.reset()
-        env.render()
-        # [NA, Jump, NA, NA, Up, Down, Left, Right, Jump, NA, NA, NA]
-        done = False
-        while not done:
-            obs, rew, done, info = env.step(nn.activate([random.random() for _ in range(1120)]))
-            print(info)
-            nn.genome.fitness += rew
-            if done:
-                obs = env.reset()
-        env.close()
+        evaluator.genomes.append(nn.genome)
+
+    isNotDone = True
+    generation = 0
+
+    while isNotDone:
+        print('Generation:', generation)
+        for nn in population:
+            # do sonic shit
+            runRew = 0
+            obs = env.reset()
+            env.render()
+            # [NA, Jump, NA, NA, Up, Down, Left, Right, Jump, NA, NA, NA]
+            done = False
+            frames = 0
+            info = {'x': 96}
+            last_x = 96
+            while not done:
+                inputsfromnn = nn.activate([info['x']])
+                obs, rew, done, info = env.step(inputsfromnn)
+                if frames == 0:
+                    start_x = info['x']
+
+                frames += 1
+                runRew += rew
+                env.render()
+
+                if frames % 300 == 0:
+                    if last_x == info['x']:
+                        done = True
+                    else:
+                        last_x = info['x']
+
+                if done:
+                    if info['level_end_bonus'] > 0:
+                        runRew += 10000
+                    nn.genome.fitness = runRew
+                    runRew = 0
+                    obs = env.reset()
+
+        finished_learning, best_genome = evaluator.evaluate()
+        if finished_learning:
+            print('Sonic beat the level!')
+            print('It took', generation,
+                  'generations! It achieved a fitness of', best_genome.fitness)
+            # Save the playback.
+            exit()
+        population = []
+        for genome in evaluator.genomes:
+            population.append(neural_network.NeuralNetwork(genome))
+        generation += 1
 
 
 if __name__ == "__main__":

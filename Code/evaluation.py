@@ -1,6 +1,7 @@
 from species import Species
 import random
 
+
 class Evaluator:
 
     def __init__(self, pop_size):
@@ -9,41 +10,54 @@ class Evaluator:
         self.score_map = {}
         self.genomes = []
         self.species = []
+        self.threshold = 10000
 
     def evaluate(self):
+        mutated_connection_genes = {}
         for genome in self.genomes:
             found_species = False
 
             for species in self.species:
-                if genome.get_compatibility_distance(species.rep, 1.0, 1.0, 0.4) < 3.0:
-                    species.add_gene(genome)
+                if genome.get_compatibility_distance(species.rep, 1.0, 1.0, 0.4, 1) < 3.0:
+                    species.add_genome(genome)
                     self.species_map[genome.id] = species
                     found_species = True
 
             if not found_species:
                 species = Species(genome)
+                self.species.append(species)
                 self.species_map[genome.id] = species
 
         for genome in self.genomes:
             fitness = genome.fitness
             species = self.species_map[genome.id]
-            adj_fitness = fitness / (len(species.genomes) if species.genomes else 1)
+            adj_fitness = fitness / \
+                (len(species.genomes) if species.genomes else 1)
             species.add_fitness(adj_fitness)
             self.score_map[genome.id] = adj_fitness
 
         next_generation = []
         for species in self.species:
-            sorted_genomes = sorted(species.genomes, key=lambda x: x.fitness, reverse=True)
+            sorted_genomes = sorted(
+                species.genomes, key=lambda x: x.fitness, reverse=True)
             fittest_genome = sorted_genomes[0]
             next_generation.append(fittest_genome)
+
+        best_generations = sorted(
+            next_generation, key=lambda x: x.fitness, reverse=True)
+
+        if best_generations[0].fitness > self.threshold:
+            return True, best_generations[0]
 
         while len(next_generation) < self.pop_size:
             species = self.get_random_species()
 
-            parentA = self.get_random_genome(species)
-            parentB = self.get_random_genome(species)
+            parentA = random.choice(species.genomes)
+            parentB = random.choice(species.genomes)
             while parentB == parentA:
-                parentB = self.get_random_genome(species)
+                if len(species.genomes) < 2:
+                    break
+                parentB = random.choice(species.genomes)
 
             new_genome = parentA.cross(parentB)
 
@@ -51,15 +65,37 @@ class Evaluator:
                 new_genome.mutate()
 
             if random.random() < 0.05:
-                new_genome.mutate_add_connection()
+                # Make sure that existing connections have the same innovation numbers
+                nc = new_genome.mutate_add_connection()
+                # If mutation happened.
+                if nc:
+                    nc_key = (nc.in_node, nc.out_node)
+                    if not mutated_connection_genes.get(nc_key):
+                        mutated_connection_genes[nc_key] = nc.innovation
+                    else:
+                        nc.innovation = mutated_connection_genes[nc_key]
 
             if random.random() < 0.03:
-                new_genome.mutate_add_node()
+                # Make sure that existing connections have the same innovation numbers
+                nc_in, nc_out = new_genome.mutate_add_node()
+                # If mutation happened.
+                if nc_in and nc_out:
+                    nc_in_key = (nc_in.in_node, nc_in.out_node)
+                    if not mutated_connection_genes.get(nc_in_key):
+                        mutated_connection_genes[nc_in_key] = nc_in.innovation
+                    else:
+                        nc_in.innovation = mutated_connection_genes[nc_in_key]
 
+                    nc_out_key = (nc_out.in_node, nc_out.out_node)
+                    if not mutated_connection_genes.get(nc_out_key):
+                        mutated_connection_genes[nc_out_key] = nc_out.innovation
+                    else:
+                        nc_out.innovation = mutated_connection_genes[nc_out_key]
 
             next_generation.append(new_genome)
 
-        self.genomes = next_generation
+        self.genomes = next_generation[:]
+        return False, None
 
     def get_random_species(self):
         total_weight = 0.0
