@@ -2,23 +2,27 @@ import math
 from genome import Genome
 from node_gene import NodeGene
 from connection_gene import ConnectionGene
+from innovation_tracker import InnovationTracker
 import random
 import uuid
+
 
 class NeuralNetwork:
 
     def __init__(self, genome):
         self.innovation_tracker = genome.innovation_tracker
         self.input_nodes = [x for x in genome.node_genes if x.type == "input"]
-        self.output_nodes = [x for x in genome.node_genes if x.type == "output"]
-        self.node_values = {x.id: 0.0 for x in self.input_nodes + self.output_nodes}
-        self.hidden_values = {x.id: 0.0 for x in [y for y in genome.node_genes if y.type == "hidden"]}
+        self.output_nodes = [
+            x for x in genome.node_genes if x.type == "output"]
+        self.node_values = {
+            x.id: 0.0 for x in self.input_nodes + self.output_nodes}
+        self.hidden_values = {x.id: 0.0 for x in [
+            y for y in genome.node_genes if y.type == "hidden"]}
         self.genome = genome
-        self.innovation_tracker = genome.innovation_tracker
 
     def activate(self, inputs):
         if len(inputs) != len(self.input_nodes):
-            raise RuntimeError("input length != input_nodes")
+            raise RuntimeError("input length:", len(inputs), "!= input_nodes:", len(self.input_nodes))
 
         for node, input_val in zip(self.input_nodes, inputs):
             self.node_values[node.id] = input_val
@@ -66,7 +70,8 @@ class NeuralNetwork:
         return next_layer
 
     @staticmethod
-    def create(num_inputs, num_outputs, innovation_tracker):
+    def create(num_inputs, num_outputs):
+        innovation_tracker = InnovationTracker()
         input_genes = []
         output_genes = []
         for i in range(num_inputs):
@@ -78,13 +83,11 @@ class NeuralNetwork:
 
         for input_node in input_genes:
             for output_node in output_genes:
-                connection_genes.append(ConnectionGene(input_node, output_node, random.random(),
-                                                       enabled=True if random.random() > 0.8 else False,
-                                                       innovation=innovation_tracker.get_innovation()))
+                if random.random() > 0.5:
+                    connection_genes.append(ConnectionGene(input_node, output_node, random.random(),
+                                                           enabled=True if random.random() > 0.8 else False,
+                                                           innovation=innovation_tracker.get_innovation()))
 
-        genome = Genome(innovation_tracker, connection_genes, input_genes + output_genes)
+        genome = Genome(innovation_tracker, connection_genes,
+                        input_genes + output_genes)
         return NeuralNetwork(genome)
-
-
-
-
