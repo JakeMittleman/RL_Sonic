@@ -1,10 +1,12 @@
 import random
 from connection_gene import ConnectionGene
+import uuid
+from node_gene import NodeGene
 
 
 class Genome:
 
-    def __init__(self, connection_genes=None, node_genes=None):
+    def __init__(self, innovation_tracker, connection_genes=None, node_genes=None):
         """
         :param connection_genes: a list of ConnectionGene objects
         """
@@ -15,18 +17,19 @@ class Genome:
         self.connection_genes = sorted(connection_genes, key=lambda x: x.innovation)
         self.node_genes = node_genes
         self.fitness = 0
+        self.id = uuid.uuid4()
+        self.innovation_tracker = innovation_tracker
 
     def get_connection(self, in_node, out_node):
         for gene in self.connection_genes:
             if gene.in_node == in_node and gene.out_node == out_node:
                 return gene
 
-    def add_connection(self, in_node, out_node, innovation):
+    def add_connection(self, in_node, out_node):
         """
         Add a new connection gene with a random weight connecting two previously unconnected nodes.
         :param in_node: the parent node
         :param out_node: the child node
-        :param innovation: the innovation
         :return: the new connection
         """
 
@@ -39,13 +42,13 @@ class Genome:
                 return
 
         # NEAT paper says the new connection gene gets a random weight
-        new_connection = ConnectionGene(in_node, out_node, random.random(), innovation=innovation)
+        new_connection = ConnectionGene(in_node, out_node, random.random(), innovation=self.innovation_tracker.get_innovation())
         self.connection_genes.append(new_connection)
         return new_connection
 
     # TODO: Do we want to ask the user to provide the connection gene or the in_node and out_node?
     #  My instinct is the connection but I could see an argument made for the in/out nodes
-    def add_node(self, node, connection, innovation):
+    def add_node(self, node, connection):
         """
         This severs a connection between two nodes (disables it) and creates two connection genes. One from the old
         connection's parent to this new node and one from this new node to the old connection's child.
@@ -55,7 +58,6 @@ class Genome:
         new connections: A --> C --> B
         :param node: the node to splice into a connection
         :param connection: the connection to be disabled.
-        :param innovation: the new innovation number
         :return: nothing
         """
 
@@ -69,14 +71,43 @@ class Genome:
         out_node = connection.out_node.copy()
         # 3) Make a connection genome from in_node -> node with a weight of 1
         # TODO: change these innovation numbers
-        in_connection = ConnectionGene(in_node, node, 1.0, True, innovation=innovation)
+        in_connection = ConnectionGene(in_node, node, 1.0, True, innovation=self.innovation_tracker.get_innovation())
         # 4) Make a connection genome from node -> out_node with weight of the old connection
-        out_connection = ConnectionGene(node, out_node, connection.weight, innovation=innovation+1)
+        out_connection = ConnectionGene(node, out_node, connection.weight, innovation=self.innovation_tracker.get_innovation())
         self.connection_genes.append(in_connection)
         self.connection_genes.append(out_connection)
         self.node_genes.append(node)
 
         return in_connection, out_connection
+
+    def mutate(self):
+        for connection in self.connection_genes:
+            if random.random() < 0.8:
+                if random.random() < 0.9:
+                    connection.weight = connection.weight * random.gauss(0.0, 0.1)
+                else:
+                    connection.weight = random.random()
+
+    def mutate_add_connection(self):
+        node1 = random.choice(self.node_genes)
+        while node1.type not in ("hidden", "input"):
+            node1 = random.choice(self.node_genes)
+        node2 = random.choice(self.node_genes)
+        if node1.type == "hidden":
+            while node2.type != "output":
+                node2 = random.choice(self.node_genes)
+        else:
+            while node2.type not in ("hidden", "output"):
+                node2 = random.choice(self.node_genes)
+
+        self.add_connection(node1, node2)
+
+    def mutate_add_node(self):
+        connection_gene = random.choice(self.connection_genes)
+        while not connection_gene.enabled:
+            connection_gene = random.choice(self.connection_genes)
+
+        self.add_node(NodeGene("hidden", uuid.uuid4()), connection_gene)
 
     def cross(self, parent2):
         """
