@@ -51,7 +51,7 @@ def main():
 
                 if done:
                     if info['level_end_bonus'] > 0:
-                        runRew += 10000
+                        runRew += 50000
                     nn.genome.fitness = runRew
                     runRew = 0
                     obs = env.reset()

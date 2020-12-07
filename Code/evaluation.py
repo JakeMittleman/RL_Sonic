@@ -10,7 +10,7 @@ class Evaluator:
         self.score_map = {}
         self.genomes = []
         self.species = []
-        self.threshold = 10000
+        self.threshold = 50000
 
     def evaluate(self):
         mutated_connection_genes = {}
