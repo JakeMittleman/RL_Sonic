@@ -4,7 +4,7 @@ from innovation_tracker import InnovationTracker
 from evaluation import Evaluator
 import random
 
-POPULATION_SIZE = 20
+POPULATION_SIZE = 50
 
 def main():
     env = retro.make(game='SonicTheHedgehog2-Genesis')
