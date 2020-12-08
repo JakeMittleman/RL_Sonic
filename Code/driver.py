@@ -3,8 +3,10 @@ import retro
 from innovation_tracker import InnovationTracker
 from evaluation import Evaluator
 import random
+import cv2
+import numpy as np
 
-POPULATION_SIZE = 50
+POPULATION_SIZE = 20
 
 def main():
     env = retro.make(game='SonicTheHedgehog2-Genesis')
@@ -13,13 +15,19 @@ def main():
 
     for i in range(POPULATION_SIZE):
         population.append(neural_network.NeuralNetwork.create(
-            1, 12))
+            100, 12))
 
     for nn in population:
         evaluator.genomes.append(nn.genome)
 
     isNotDone = True
     generation = 0
+
+    inx, iny, inc = env.observation_space.shape
+
+    inx = int(inx/8)
+    iny = int(iny/8)
+
 
     while isNotDone:
         print('Generation:', generation)
@@ -31,17 +39,30 @@ def main():
             # [NA, Jump, NA, NA, Up, Down, Left, Right, Jump, NA, NA, NA]
             done = False
             frames = 0
-            info = {'x': 96}
+            info = {'x': 96, 'y': 656}
             last_x = 96
             while not done:
-                inputsfromnn = nn.activate([info['x']])
+
+                obs = cv2.resize(obs, (inx, iny))
+                obs = cv2.cvtColor(obs, cv2.COLOR_BGR2GRAY)
+                obs = np.reshape(obs, (inx,iny))
+
+                inputs = []
+                for i in range(len(obs)//2-5, len(obs)//2+5):
+                    for j in range(len(obs[0])//2-5, len(obs[0])//2+5):
+                        inputs.append(obs[i][j])
+
+                inputsfromnn = nn.activate(inputs)
+                # inputsfromnn = nn.activate([info['x'], info['y']])
+                # inputsfromnn = nn.activate([info['x']])
                 obs, rew, done, info = env.step(inputsfromnn)
                 if frames == 0:
                     start_x = info['x']
 
                 frames += 1
-                runRew += rew
+                # runRew += rew
                 env.render()
+                runRew = 0
 
                 if frames % 300 == 0:
                     if last_x == info['x']:
@@ -50,6 +71,7 @@ def main():
                         last_x = info['x']
 
                 if done:
+                    runRew = info['x'] - 96
                     if info['level_end_bonus'] > 0:
                         runRew += 50000
                     nn.genome.fitness = runRew

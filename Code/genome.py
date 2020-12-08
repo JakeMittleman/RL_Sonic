@@ -42,7 +42,7 @@ class Genome:
                 return
 
         # NEAT paper says the new connection gene gets a random weight
-        new_connection = ConnectionGene(in_node, out_node, random.random(), innovation=self.innovation_tracker.get_innovation())
+        new_connection = ConnectionGene(in_node, out_node, random.uniform(-2, 2), innovation=self.innovation_tracker.get_innovation())
         self.connection_genes.append(new_connection)
         return new_connection
 
@@ -86,7 +86,7 @@ class Genome:
                 if random.random() < 0.9:
                     connection.weight = connection.weight * random.gauss(0.0, 0.1)
                 else:
-                    connection.weight = random.random()
+                    connection.weight = random.uniform(-2, 2)
 
     def mutate_add_connection(self):
         node1 = random.choice(self.node_genes)
@@ -153,6 +153,11 @@ class Genome:
 
         nodes = set()
 
+        p1_p2_inputs = [x.copy() for x in self.node_genes + parent2.node_genes if x.type == 'input']
+
+        for node in p1_p2_inputs:
+            nodes.add(node)
+            
         for gene in new_genes:
             if not gene.enabled:
                 chance = random.random()
