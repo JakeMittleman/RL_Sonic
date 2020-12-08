@@ -10,3 +10,6 @@ class Species:
 
     def add_fitness(self, fitness):
         self.adj_fitness += fitness
+
+    def __str__(self):
+        return str.format('{}', self.rep.id)

@@ -38,6 +38,7 @@ class Evaluator:
             species.add_fitness(adj_fitness)
             self.score_map[genome.id] = adj_fitness
 
+        print('Species:', len(self.species))
         # Put the best genomes of each species into the next generation.
         next_generation = []
         for species in self.species:
@@ -45,6 +46,10 @@ class Evaluator:
                 species.genomes, key=lambda x: x.fitness, reverse=True)
             fittest_genome = sorted_genomes[0]
             next_generation.append(fittest_genome)
+
+        print('Best performing genomes in each species')
+        for genome in next_generation:
+            print('Genome:', genome.id, 'Species:', self.species_map[genome.id], 'Fitness:', genome.fitness)
 
         # Check if we're done.
         best_generations = sorted(
