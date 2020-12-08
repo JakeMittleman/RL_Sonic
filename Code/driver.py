@@ -41,6 +41,8 @@ def main():
             frames = 0
             info = {'x': 96, 'y': 656}
             last_x = 96
+            stuck_x = 96
+            score_mul = 1
             while not done:
 
                 obs = cv2.resize(obs, (inx, iny))
@@ -70,11 +72,19 @@ def main():
                     else:
                         last_x = info['x']
 
+                if frames % 600 == 0:
+                    if abs(stuck_x - info['x']) < 250:
+                        # print(stuck_x, info['x'])
+                        done = True
+                        score_mul = 0.75
+                    else:
+                        stuck_x = info['x']
+
                 if done:
                     runRew = info['x'] - 96
                     if info['level_end_bonus'] > 0:
                         runRew += 50000
-                    nn.genome.fitness = runRew
+                    nn.genome.fitness = runRew * score_mul
                     runRew = 0
                     obs = env.reset()
 
@@ -85,8 +95,6 @@ def main():
                   'generations! It achieved a fitness of', best_genome.fitness)
             # Save the playback.
             exit()
-        else:
-            print('Best Genome:', best_genome.id, 'with fitness:', best_genome.fitness)
         population = []
         for genome in evaluator.genomes:
             population.append(neural_network.NeuralNetwork(genome))
