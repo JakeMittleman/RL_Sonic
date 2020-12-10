@@ -1,6 +1,11 @@
 from species import Species
 import random
 
+# Tweakable
+C1 = 2.5
+C2 = 2.5
+C3 = 3
+DIS_THRES = 1
 
 class Evaluator:
 
@@ -31,9 +36,13 @@ class Evaluator:
                     N = max(len(genome.connection_genes), len(species.rep.connection_genes))
                     if N < 20:
                         N = 1
+<<<<<<< HEAD
                     compat_dist = genome.get_compatibility_distance(species.rep, 1.0, 1.0, 0.4, 1)
                     # print(genome.id, species.rep.id, "-", compat_dist)
                     if compat_dist < 2.5:
+=======
+                    if genome.get_compatibility_distance(species.rep, C1, C2, C3, N) < DIS_THRES:
+>>>>>>> d053d119f15feefff1d4a598c0b0ec5a43259058
                         species.add_genome(genome)
                         self.species_map[genome.id] = species
                         found_species = True
@@ -92,7 +101,11 @@ class Evaluator:
                 species.genomes, key=lambda x: x.fitness, reverse=True)
             parentA = self.get_random_genome(species)
             # Let the cross over happen between the best genomes.
+<<<<<<< HEAD
             # parentA = sorted_genomes[0]
+=======
+            parentA = self.get_random_genome(species)
+>>>>>>> d053d119f15feefff1d4a598c0b0ec5a43259058
             parentB = self.get_random_genome(species)
             while parentB == parentA:
                 if len(species.genomes) < 2:
@@ -143,9 +156,13 @@ class Evaluator:
                 N = max(len(genome.connection_genes), len(species.rep.connection_genes))
                 if N < 20:
                     N = 1
+<<<<<<< HEAD
                 compat_dist = genome.get_compatibility_distance(species.rep, 1.0, 1.0, 0.4, 1)
                 # print(genome.id, species.rep.id, "-", compat_dist, "-", N)
                 if compat_dist < 2.5:
+=======
+                if genome.get_compatibility_distance(species.rep, C1, C2, C3, N) < DIS_THRES:
+>>>>>>> d053d119f15feefff1d4a598c0b0ec5a43259058
                     species.add_genome(genome)
                     self.species_map[genome.id] = species
                     found_species = True

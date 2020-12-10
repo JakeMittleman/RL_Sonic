@@ -100,7 +100,11 @@ def main():
                     runRew = info['x'] - 96
                     if info['level_end_bonus'] > 0:
                         runRew += 50000
+<<<<<<< HEAD
                     nn.genome.fitness = runRew * score_mul + info['rings'] * 5 - (frames / 60)
+=======
+                    nn.genome.fitness = runRew * score_mul
+>>>>>>> d053d119f15feefff1d4a598c0b0ec5a43259058
                     if nn.genome.fitness > max_fitness:
                         max_fitness = nn.genome.fitness
                         level_map.save("../output/maps/level_map_%d.png" % int(max_fitness), "PNG")
