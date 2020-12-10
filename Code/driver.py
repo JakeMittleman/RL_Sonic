@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 import os
 
-POPULATION_SIZE = 20
+POPULATION_SIZE = 150
 
 def main():
     env = retro.make(game='SonicTheHedgehog2-Genesis', record='../output/recordings')
@@ -41,13 +41,13 @@ def main():
 
 
     while isNotDone:
-        print('Generation:', generation)
+        print('\n------------\nGeneration: %d\n-----------' % generation)
         for nn in population:
             draw = ImageDraw.Draw(level_map)
             # do sonic shit
             runRew = 0
             obs = env.reset()
-            # env.render()
+            env.render()
             # [NA, Jump, NA, NA, Up, Down, Left, Right, Jump, NA, NA, NA]
             done = False
             frames = 0
@@ -78,7 +78,7 @@ def main():
 
                 frames += 1
                 # runRew += rew
-                # env.render()
+                env.render()
                 runRew = 0
 
                 if frames % 300 == 0:
@@ -100,11 +100,7 @@ def main():
                     runRew = info['x'] - 96
                     if info['level_end_bonus'] > 0:
                         runRew += 50000
-<<<<<<< HEAD
                     nn.genome.fitness = runRew * score_mul + info['rings'] * 5 - (frames / 60)
-=======
-                    nn.genome.fitness = runRew * score_mul
->>>>>>> d053d119f15feefff1d4a598c0b0ec5a43259058
                     if nn.genome.fitness > max_fitness:
                         max_fitness = nn.genome.fitness
                         level_map.save("../output/maps/level_map_%d.png" % int(max_fitness), "PNG")
@@ -121,9 +117,8 @@ def main():
                         number = "0" * (6 - len(str(recording_iteration))) + str(recording_iteration)
                         path = "../output/recordings/SonicTheHedgehog2-Genesis-EmeraldHillZone.Act1-%s.bk2" % number
                         if os.path.exists(path):
+                            os.chmod(path, 777)
                             os.remove(path)
-
-            exit()
 
         finished_learning, best_genome = evaluator.evaluate()
         if finished_learning:
