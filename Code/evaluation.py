@@ -15,8 +15,13 @@ class Evaluator:
     def evaluate(self):
         mutated_connection_genes = {}
         if self.species:
+            empty_species = set()
             for species in self.species:
-                species.update_rep()
+                if not species.genomes:
+                    empty_species.add(species)
+                else:
+                    species.update_rep()
+            self.species = self.species - empty_species
                 # species.genomes = set()
         # Assign genomes to species.
         else:
@@ -26,24 +31,40 @@ class Evaluator:
                     N = max(len(genome.connection_genes), len(species.rep.connection_genes))
                     if N < 20:
                         N = 1
-                    if genome.get_compatibility_distance(species.rep, 1.0, 1.0, 0.4, N) < 3.0:
+                    compat_dist = genome.get_compatibility_distance(species.rep, 1.0, 1.0, 0.4, 1)
+                    # print(genome.id, species.rep.id, "-", compat_dist)
+                    if compat_dist < 2.5:
                         species.add_genome(genome)
                         self.species_map[genome.id] = species
-                    found_species = True
+                        found_species = True
+                        break
 
                 if not found_species:
                     species = Species(genome)
                     self.species.add(species)
                     self.species_map[genome.id] = species
 
+        # try killing off under-performing genomes
+        eliminated_genomes = []
+
+        if len(self.genomes) > 11:
+            sorted_genomes = sorted(self.genomes, key=lambda x: x.fitness, reverse=True)
+            self.genomes = sorted_genomes[:len(sorted_genomes) // 10]
+            eliminted_genomes = sorted_genomes[len(sorted_genomes) // 10:]
+
+        for species in self.species:
+            for genome in self.genomes:
+                if genome in eliminated_genomes:
+                    species.genomes.remove(genome)
+
         # Get the adjusted fitness of the species.
-        for genome in self.genomes:
-            fitness = genome.fitness
-            species = self.species_map[genome.id]
-            adj_fitness = fitness / \
-                (len(species.genomes) if species.genomes else 1)
-            species.add_fitness(adj_fitness)
-            self.score_map[genome.id] = adj_fitness
+        # for genome in self.genomes:
+        #     fitness = genome.fitness
+        #     species = self.species_map[genome.id]
+        #     adj_fitness = fitness / \
+        #         (len(species.genomes) if species.genomes else 1)
+        #     species.add_fitness(adj_fitness)
+        #     self.score_map[genome.id] = adj_fitness
 
         print('Species:', len(self.species))
         # Put the best genomes of each species into the next generation.
@@ -69,15 +90,14 @@ class Evaluator:
             species = self.get_random_species()
             sorted_genomes = sorted(
                 species.genomes, key=lambda x: x.fitness, reverse=True)
-            # parentA = random.choice(species.genomes)
+            parentA = self.get_random_genome(species)
             # Let the cross over happen between the best genomes.
-            parentA = sorted_genomes[0]
+            # parentA = sorted_genomes[0]
             parentB = self.get_random_genome(species)
             while parentB == parentA:
                 if len(species.genomes) < 2:
                     break
                 parentB = self.get_random_genome(species)
-                print("stuck here")
 
             new_genome = parentA.cross(parentB)
 
@@ -123,10 +143,13 @@ class Evaluator:
                 N = max(len(genome.connection_genes), len(species.rep.connection_genes))
                 if N < 20:
                     N = 1
-                if genome.get_compatibility_distance(species.rep, 1.0, 1.0, 0.4, N) < 3.0:
+                compat_dist = genome.get_compatibility_distance(species.rep, 1.0, 1.0, 0.4, 1)
+                # print(genome.id, species.rep.id, "-", compat_dist, "-", N)
+                if compat_dist < 2.5:
                     species.add_genome(genome)
                     self.species_map[genome.id] = species
                     found_species = True
+                    break
 
             if not found_species:
                 species = Species(genome)

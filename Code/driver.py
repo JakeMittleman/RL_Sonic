@@ -1,15 +1,16 @@
 import neural_network
 import retro
-from innovation_tracker import InnovationTracker
 from evaluation import Evaluator
-import random
+from PIL import Image, ImageDraw
 import cv2
 import numpy as np
+import os
 
 POPULATION_SIZE = 20
 
 def main():
-    env = retro.make(game='SonicTheHedgehog2-Genesis')
+    env = retro.make(game='SonicTheHedgehog2-Genesis', record='../output/recordings')
+    recording_iteration = -1
     population = []
     evaluator = Evaluator(POPULATION_SIZE)
 
@@ -28,19 +29,32 @@ def main():
     inx = int(inx/8)
     iny = int(iny/8)
 
+    level_map = Image.open("../level_map.png").convert("RGB")
+
+    max_fitness = 0
+
+    # 300 x 100
+    # 36 x 24
+    # 300 / 36 = 36
+
+    delete = False
+
 
     while isNotDone:
         print('Generation:', generation)
         for nn in population:
+            draw = ImageDraw.Draw(level_map)
             # do sonic shit
             runRew = 0
             obs = env.reset()
-            env.render()
+            # env.render()
             # [NA, Jump, NA, NA, Up, Down, Left, Right, Jump, NA, NA, NA]
             done = False
             frames = 0
             info = {'x': 96, 'y': 656}
+            draw.line((info['x'], info['y'], info['x'], info['y']), fill=(255, 0, 0), width=5)
             last_x = 96
+            last_y = 656
             stuck_x = 96
             score_mul = 1
             while not done:
@@ -58,19 +72,21 @@ def main():
                 # inputsfromnn = nn.activate([info['x'], info['y']])
                 # inputsfromnn = nn.activate([info['x']])
                 obs, rew, done, info = env.step(inputsfromnn)
+                draw.line((last_x, last_y, info['x'], info['y']), fill=(255, 0, 0), width=5)
                 if frames == 0:
                     start_x = info['x']
 
                 frames += 1
                 # runRew += rew
-                env.render()
+                # env.render()
                 runRew = 0
 
                 if frames % 300 == 0:
                     if last_x == info['x']:
                         done = True
-                    else:
-                        last_x = info['x']
+
+                last_x = info['x']
+                last_y = info['y']
 
                 if frames % 600 == 0:
                     if abs(stuck_x - info['x']) < 250:
@@ -84,9 +100,26 @@ def main():
                     runRew = info['x'] - 96
                     if info['level_end_bonus'] > 0:
                         runRew += 50000
-                    nn.genome.fitness = runRew * score_mul
+                    nn.genome.fitness = runRew * score_mul + info['rings'] * 5 - (frames / 60)
+                    if nn.genome.fitness > max_fitness:
+                        max_fitness = nn.genome.fitness
+                        level_map.save("../output/maps/level_map_%d.png" % int(max_fitness), "PNG")
+                        recording_iteration += 1
+                        delete = False
+                    else:
+                        level_map = Image.open("../level_map.png").convert("RGB")
+                        delete = True
+                        recording_iteration += 1
+
                     runRew = 0
-                    obs = env.reset()
+
+                    if delete:
+                        number = "0" * (6 - len(str(recording_iteration))) + str(recording_iteration)
+                        path = "../output/recordings/SonicTheHedgehog2-Genesis-EmeraldHillZone.Act1-%s.bk2" % number
+                        if os.path.exists(path):
+                            os.remove(path)
+
+            exit()
 
         finished_learning, best_genome = evaluator.evaluate()
         if finished_learning:
