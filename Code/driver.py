@@ -8,15 +8,16 @@ import os
 
 POPULATION_SIZE = 150
 
+
 def main():
     env = retro.make(game='SonicTheHedgehog2-Genesis', record='../output/recordings')
-    recording_iteration = -1
+    recording_iteration = -2
     population = []
     evaluator = Evaluator(POPULATION_SIZE)
 
     for i in range(POPULATION_SIZE):
         population.append(neural_network.NeuralNetwork.create(
-            100, 12))
+            70, 12))
 
     for nn in population:
         evaluator.genomes.append(nn.genome)
@@ -26,8 +27,8 @@ def main():
 
     inx, iny, inc = env.observation_space.shape
 
-    inx = int(inx/8)
-    iny = int(iny/8)
+    inx = int(inx/32)
+    iny = int(iny/32)
 
     level_map = Image.open("../level_map.png").convert("RGB")
 
@@ -37,13 +38,14 @@ def main():
     # 36 x 24
     # 300 / 36 = 36
 
-    delete = False
+    next_delete = False
 
 
     while isNotDone:
         print('\n------------\nGeneration: %d\n-----------' % generation)
         for nn in population:
             draw = ImageDraw.Draw(level_map)
+            delete = next_delete
             # do sonic shit
             runRew = 0
             obs = env.reset()
@@ -55,6 +57,7 @@ def main():
             draw.line((info['x'], info['y'], info['x'], info['y']), fill=(255, 0, 0), width=5)
             last_x = 96
             last_y = 656
+            stopped_x = 96
             stuck_x = 96
             score_mul = 1
             while not done:
@@ -63,12 +66,12 @@ def main():
                 obs = cv2.cvtColor(obs, cv2.COLOR_BGR2GRAY)
                 obs = np.reshape(obs, (inx,iny))
 
-                inputs = []
-                for i in range(len(obs)//2-5, len(obs)//2+5):
-                    for j in range(len(obs[0])//2-5, len(obs[0])//2+5):
-                        inputs.append(obs[i][j])
+                # inputs = []
+                # for i in range(len(obs)//2-5, len(obs)//2+5):
+                #     for j in range(len(obs[0])//2-5, len(obs[0])//2+5):
+                #         inputs.append(obs[i][j])
 
-                inputsfromnn = nn.activate(inputs)
+                inputsfromnn = nn.activate(list(np.ndarray.flatten(obs)))
                 # inputsfromnn = nn.activate([info['x'], info['y']])
                 # inputsfromnn = nn.activate([info['x']])
                 obs, rew, done, info = env.step(inputsfromnn)
@@ -82,8 +85,10 @@ def main():
                 runRew = 0
 
                 if frames % 300 == 0:
-                    if last_x == info['x']:
+                    if stopped_x == info['x']:
                         done = True
+                    else:
+                        stopped_x = info['x']
 
                 last_x = info['x']
                 last_y = info['y']
@@ -103,13 +108,13 @@ def main():
                     nn.genome.fitness = runRew * score_mul + info['rings'] * 5 - (frames / 60)
                     if nn.genome.fitness > max_fitness:
                         max_fitness = nn.genome.fitness
-                        level_map.save("../output/maps/level_map_%d.png" % int(max_fitness), "PNG")
-                        recording_iteration += 1
-                        delete = False
+                        level_map.save("../output/maps/level_map_%d-%d.png" % (int(max_fitness), recording_iteration), "PNG")
+                        next_delete = False
                     else:
                         level_map = Image.open("../level_map.png").convert("RGB")
-                        delete = True
-                        recording_iteration += 1
+                        next_delete = True
+
+                    recording_iteration += 1
 
                     runRew = 0
 
@@ -117,7 +122,6 @@ def main():
                         number = "0" * (6 - len(str(recording_iteration))) + str(recording_iteration)
                         path = "../output/recordings/SonicTheHedgehog2-Genesis-EmeraldHillZone.Act1-%s.bk2" % number
                         if os.path.exists(path):
-                            os.chmod(path, 777)
                             os.remove(path)
 
         finished_learning, best_genome = evaluator.evaluate()
